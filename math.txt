@@ -17,6 +17,8 @@ Users:
 
 	walking_distance(u)
 
+	no_driver_penalty
+
 Locations:
 
 	i, j ∈ L
@@ -61,6 +63,8 @@ Drivers:
 
 	route_as_driver(u, i, j) >= -1 + route(u, i, j) + driver(u)
 
+	distance_by_car = ∑ u ∈ U: ∑ i ∈ L: ∑ j ∈ L: route_as_driver(u, i, j) * distance(i, j)
+
 Walking:
 
 	route_by_car(u, i, j) ∈ {0, 1}
@@ -73,6 +77,12 @@ Walking:
 
 	∑ i, j ∈ L: route_by_walk(u, i, j) * distance(i, j) <= walking_distance(u)
 
+Penalties:
+
+	has_driver(u) = ∑ d ∈ U: drives(d, u)
+
+	penalty = ∑ u ∈ U: (1 - has_driver(u)) * no_driver_penalty
+
 Times:
 
 	departure(u)   u ∈ U
@@ -84,8 +94,7 @@ Times:
 
 Goal:
 
-	minimize ∑ u ∈ U: ∑ i ∈ L: ∑ j ∈ L: route_as_driver(u, i, j) * distance(i, j)
-
+	minimize(distance_by_car + penalty)
 	
 
 	

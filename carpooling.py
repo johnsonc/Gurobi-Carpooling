@@ -30,6 +30,10 @@ wants_to_drive = [ user[3] for user in users ]
 available_seats = [ user[4] for user in users ]
 walking_distance = [ user[5] for user in users ]
 
+# no_driver_penalty
+
+no_driver_penalty = 200
+
 # i, j ∈ L
 # distance(i, j)
 
@@ -91,6 +95,8 @@ for u in U:
 # route_as_driver(u, i, j) ∈ {0, 1}
 # 
 # route_as_driver(u, i, j) >= -1 + route(u, i, j) + driver(u)
+# 
+# distance_by_car = ∑ u ∈ U: ∑ i ∈ L: ∑ j ∈ L: route_as_driver(u, i, j) * distance(i, j)
 
 driver = [ m.addVar(vtype = GRB.BINARY, name = "driver_" + u[0])
             for u in users ]
@@ -126,6 +132,8 @@ for u in U:
         for j in L:
             m.addConstr(route_as_driver[u][i][j] >= -1 + route[u][i][j] + driver[u])
 
+distance_by_car = sum(route_as_driver[u][i][j]*distance[i][j] for u in U for i in L for j in L)
+
 # route_by_car(u, i, j) ∈ {0, 1}
 # 
 # route_by_car(u, i, j) <= route(d, i, j) + (1 - drives(d, u))
@@ -156,6 +164,13 @@ for u in U:
 for u in U:
     m.addConstr(sum(route_by_walk[u][i][j] * distance[i][j] for i in L for j in L) <= walking_distance[u])
 
+# has_driver(u) = ∑ d ∈ U: drives(d, u)
+# 
+# penalty = ∑ u ∈ U: (1 - has_driver(u)) * no_driver_penalty
+
+has_driver = [ sum(drives[d][u] for d in U) for u in U ]
+
+penalty = sum((1 - has_driver[u]) * no_driver_penalty for u in U)
 
 
 
@@ -163,10 +178,9 @@ for u in U:
 
 
 
+# minimize(distance_by_car + penalty)
 
-# minimize ∑ u ∈ U: ∑ i ∈ L: ∑ j ∈ L: route_as_driver(u, i, j) * distance(i, j)
-
-m.setObjective(sum(route_as_driver[u][i][j]*distance[i][j] for u in U for i in L for j in L), GRB.MINIMIZE)
+m.setObjective(distance_by_car + penalty, GRB.MINIMIZE)
 
 m.optimize()
 
