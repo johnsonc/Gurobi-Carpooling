@@ -11,7 +11,7 @@ Users:
 
 	latest_arrive(u)
 
-	driver(u) [yes/no/flexible]
+	wants_to_drive(u) [yes/no/flex]
 
 	available_seats(u)
 
@@ -41,19 +41,37 @@ Routes:
 
 Drivers:
 
-	drives(d, u)   d, u ∈ U
+	d, u ∈ U
 
-	drives(d, u) < driver(d) for d, u ∈ U
+	driver(u) ∈ {0, 1}
 
-	∑ d ∈ U: drives(d, u) <= 1 for u ∈ U
+	driver(u) = 0 when wants_to_drive(u) = "no"
+		  = 1 when wants_to_drive(u) = "yes"
 
-	∑ u ∈ U: drives(d, u) <= available_seats(d) for d ∈ U
+	drives(d, u) ∈ {0, 1}
+
+	drives(d, u) == driver(d) when d = u
+		     <= driver(d) otherwise
+
+	∑ d ∈ U: drives(d, u) <= 1
+
+	∑ u ∈ U: drives(d, u) <= available_seats(d)
+
+	route_as_driver(u, i, j) ∈ {0, 1}
+
+	route_as_driver(u, i, j) >= -1 + route(u, i, j) + driver(u)
 
 Walking:
 
-	riding(i, j, u) = ∑ d ∈ U: route(i, j, d) when drives(d, u)
+	route_by_car(u, i, j) ∈ {0, 1}
 
-	walking(i, j, u) = 1 - riding(i, j, u)
+	route_by_car(u, i, j) <= route(d, i, j) + (1 - drives(d, u))
+
+	route_by_walk(u, i, j) ∈ {0, 1}
+
+	route_by_walk(u, i, j) >= -1 + route(u, i, j) + (1 - route_by_car(u, i, j))
+
+	∑ i, j ∈ L: route_by_walk(u, i, j) * distance(i, j) <= walking_distance(u)
 
 Times:
 
@@ -66,7 +84,7 @@ Times:
 
 Goal:
 
-	minimize ∑ u ∈ U: ∑ i ∈ L: ∑ j ∈ L: route(u, i, j) * distance(i, j)
+	minimize ∑ u ∈ U: ∑ i ∈ L: ∑ j ∈ L: route_as_driver(u, i, j) * distance(i, j)
 
 	
 
