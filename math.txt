@@ -7,9 +7,9 @@ Users:
 
 	destination(u)
 
-	earliest_depart(u)
+	earliest_departure(u)
 
-	latest_arrive(u)
+	latest_arrival(u)
 
 	wants_to_drive(u) [yes/no/flex]
 
@@ -41,6 +41,10 @@ Routes:
 				     = -1 when i = destination(u)
 				     = 0 otherwise
 
+	fan_in(u, i) <= 1
+
+	fan_out(u, i) <= 1
+
 Drivers:
 
 	d, u ∈ U
@@ -59,9 +63,18 @@ Drivers:
 
 	∑ u ∈ U: drives(d, u) <= available_seats(d)
 
+	has_driver(u) = ∑ d ∈ U: drives(d, u)
+
 	route_as_driver(u, i, j) ∈ {0, 1}
 
-	route_as_driver(u, i, j) >= -1 + route(u, i, j) + driver(u)
+	route_as_driver(u, i, j) = 1 when route(u, i, j) and driver(u)
+		 		 = 0 otherwise
+
+		route_as_driver(u, i, j) >= -1 + route(u, i, j) + driver(u)
+
+		route_as_driver(u, i, j) <= route(u, i, j)
+
+		route_as_driver(u, i, j) <= driver(u)
 
 	distance_by_car = ∑ u ∈ U: ∑ i ∈ L: ∑ j ∈ L: route_as_driver(u, i, j) * distance(i, j)
 
@@ -69,17 +82,24 @@ Walking:
 
 	route_by_car(u, i, j) ∈ {0, 1}
 
-	route_by_car(u, i, j) <= route(d, i, j) + (1 - drives(d, u))
+	route_by_car(u, i, j) = 1 when route(u, i, j) and route(d, i, j) and drives(d, u)
+			      = 0 otherwise
+
+		route_by_car(u, i, j) >= -2 + route(u, i, j) + route(d, i, j) + drives(d, u)
+
+		route_by_car(u, i, j) <= route(d, i, j) + (1 - drives(d, u))
+
+		route_by_car(u, i, j) <= route(u, i, j)
+
+		route_by_car(u, i, j) <= has_driver(u)
 
 	route_by_walk(u, i, j) ∈ {0, 1}
 
-	route_by_walk(u, i, j) >= -1 + route(u, i, j) + (1 - route_by_car(u, i, j))
+	route_by_walk(u, i, j) = route(u, i, j) - route_by_car(u, i, j)
 
 	∑ i, j ∈ L: route_by_walk(u, i, j) * distance(i, j) <= walking_distance(u)
 
 Penalties:
-
-	has_driver(u) = ∑ d ∈ U: drives(d, u)
 
 	penalty = ∑ u ∈ U: (1 - has_driver(u)) * no_driver_penalty
 
@@ -88,9 +108,9 @@ Times:
 	departure(u)   u ∈ U
 	arrival(u)   u ∈ U
 
-	earliest_depart(u) <= departure(u)
+	earliest_departure(u) <= departure(u)
 	departure <= arrival(u)
-	arrival(u) <= latest_arrive(u)
+	arrival(u) <= latest_arrival(u)
 
 Goal:
 
