@@ -45,6 +45,16 @@ Routes:
 
 	fan_out(u, i) <= 1
 
+	visits(u, i) ∈ {0, 1}
+
+	visits(u, i) = fan_in(u, i) or fan_out(u, i)
+
+		visits(u, i) >= fan_in(u, i)
+
+		visits(u, i) >= fan_out(u, i)
+
+		visits(u, i) <= fan_in(u, i) + fan_out(u, i)
+
 Drivers:
 
 	d, u ∈ U
@@ -105,12 +115,35 @@ Penalties:
 
 Times:
 
-	departure(u)   u ∈ U
-	arrival(u)   u ∈ U
+	time(u, i) ∈ ℝ
 
-	earliest_departure(u) <= departure(u)
-	departure <= arrival(u)
-	arrival(u) <= latest_arrival(u)
+	time(u, i) >= 0
+
+	time(u, i) = 0 when not visits(u, i)
+
+		time(u, i) <= M * visits(u, i)
+
+	time(u, source(u)) >= earliest_departure(u)
+
+	time(u, destination(u)) <= latest_arrival(u)
+
+	time(u, j) = time(u, i) + drive_time(i, j) when route_by_car(u, i, j)
+
+		time(u, j) >= time(u, i) + drive_time(i, j) - M * (1 - route_by_car(u, i, j))
+
+		time(u, j) <= time(u, i) + drive_time(i, j) + M * (1 - route_by_car(u, i, j))
+
+	time(u, j) = time(u, i) + walk_time(i, j) when route_by_walk(u, i, j)
+
+		time(u, j) >= time(u, i) + walk_time(i, j) - M * (1 - route_by_walk(u, i, j))
+
+		time(u, j) <= time(u, i) + walk_time(i, j) + M * (1 - route_by_walk(u, i, j))
+
+	time(u, i) = time(d, i) when drives(d, u) and visits(u, i) and visits(d, i)
+
+		time(u, i) >= time(d, i) - M * (3 - drives(d, u) - visits(u, i) - visits(d, i))
+
+		time(u, i) <= time(d, i) + M * (3 - drives(d, u) - visits(u, i) - visits(d, i))
 
 Goal:
 
